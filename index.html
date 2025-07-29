@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NPI-Q SUMMARY</title>
+  <style>
+    body { font-family: sans-serif; margin: 40px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f0f0f0; }
+    h2 { text-align: center; }
+    button { margin-top: 20px; padding: 10px 20px; }
+    pre { white-space: pre-wrap; background: #f9f9f9; padding: 10px; border: 1px solid #ccc; text-align: left; }
+  </style>
+</head>
+<body>
+  <h2>NPI-Q SUMMARY</h2>
+  <form id="npiq-form">
+    <table>
+      <thead>
+        <tr>
+          <th> </th>
+          <th>Yes</th>
+          <th colspan="4">Severity<br><small>(0=None, 1=Mild, 2=Mod, 3=Severe)</small></th>
+          <th colspan="6">Caregiver Distress<br><small>(0=Not at all → 5=Extremely)</small></th>
+        </tr>
+      </thead>
+      <tbody>
+        <script>
+          const items = [
+            'Delusions', 'Hallucinations', 'Agitation/Aggression', 'Dysphoria/Depression', 'Anxiety',
+            'Euphoria/Elation', 'Apathy/Indifference', 'Disinhibition', 'Irritability/Lability',
+            'Aberrant Motor', 'Nighttime Behavior', 'Appetite/Eating'
+          ];
+
+          items.forEach((item, i) => {
+            document.write('<tr>');
+            document.write(`<td>${item}</td>`);
+            document.write(`<td><input type="checkbox" class="yes-check" data-index="${i}"></td>`);
+            for (let j = 0; j <= 3; j++) {
+              document.write(`<td><input type="radio" class="severity" disabled name="severity_${i}" value="${j}"></td>`);
+            }
+            for (let j = 0; j <= 5; j++) {
+              document.write(`<td><input type="radio" class="distress" disabled name="distress_${i}" value="${j}"></td>`);
+            }
+            document.write('</tr>');
+          });
+        </script>
+        <tr>
+          <th colspan="2">TOTAL</th>
+          <td colspan="4" id="severity-total"></td>
+          <td colspan="6" id="distress-total"></td>
+        </tr>
+      </tbody>
+    </table>
+    <button type="button" onclick="generateSummary()">Generate Summary</button>
+  </form>
+
+  <h3>Summary Output:</h3>
+  <pre id="output"></pre>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".yes-check").forEach((checkbox) => {
+        checkbox.addEventListener("change", () => {
+          const index = checkbox.getAttribute("data-index");
+          const severity = document.querySelectorAll(`input[name='severity_${index}']`);
+          const distress = document.querySelectorAll(`input[name='distress_${index}']`);
+          severity.forEach(r => r.disabled = !checkbox.checked);
+          distress.forEach(r => r.disabled = !checkbox.checked);
+        });
+      });
+    });
+
+    function generateSummary() {
+      const severityInputs = document.querySelectorAll('input[name^="severity_"]:checked');
+      const distressInputs = document.querySelectorAll('input[name^="distress_"]:checked');
+
+      let severityTotal = 0;
+      let distressTotal = 0;
+
+      severityInputs.forEach(input => severityTotal += parseInt(input.value));
+      distressInputs.forEach(input => distressTotal += parseInt(input.value));
+
+      document.getElementById("severity-total").textContent = severityTotal;
+      document.getElementById("distress-total").textContent = distressTotal;
+
+      const items = [
+        'Delusions', 'Hallucinations', 'Agitation/Aggression', 'Dysphoria/Depression', 'Anxiety',
+        'Euphoria/Elation', 'Apathy/Indifference', 'Disinhibition', 'Irritability/Lability',
+        'Aberrant Motor', 'Nighttime Behavior', 'Appetite/Eating'
+      ];
+
+      let detailLines = items.map((item, i) => {
+        const sev = document.querySelector(`input[name='severity_${i}']:checked`);
+        const dis = document.querySelector(`input[name='distress_${i}']:checked`);
+        return `${item.padEnd(22)} | Severity: ${sev ? sev.value : '-'} | Distress: ${dis ? dis.value : '-'}`;
+      }).join('\n');
+
+      document.getElementById("output").textContent =
+        `=== NPI-Q Summary ===\nSeverity Total: ${severityTotal}\nCaregiver Distress Total: ${distressTotal}\n\nDetails:\n` + detailLines;
+    }
+  </script>
+</body>
+</html>
